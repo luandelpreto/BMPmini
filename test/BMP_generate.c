@@ -37,6 +37,8 @@ static unsigned char *BMP_info_header(size_t height, size_t width)
         0,0,0,0,   // important color count
     };
 
+    size_t imagesizebytes = height * width * BMP_BYTES_PER_PIXEL;
+
     info_header[0] = (unsigned char) BMP_INFO_HEADER_SIZE;
     info_header[4] = (unsigned char) width;
     info_header[5] = (unsigned char) (width >> 8);
@@ -48,6 +50,10 @@ static unsigned char *BMP_info_header(size_t height, size_t width)
     info_header[11] = (unsigned char) (height >> 24);
     info_header[12] = (unsigned char) 1;
     info_header[14] = (unsigned char) (BMP_BYTES_PER_PIXEL * CHAR_BIT);
+    info_header[20] = (unsigned char) imagesizebytes;
+    info_header[21] = (unsigned char) (imagesizebytes >> 8);
+    info_header[22] = (unsigned char) (imagesizebytes >> 16);
+    info_header[23] = (unsigned char) (imagesizebytes >> 24);
 
     return info_header;
 }
