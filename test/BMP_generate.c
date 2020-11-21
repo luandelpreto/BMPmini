@@ -13,6 +13,8 @@
 #define BMP_FILE_HEADER_SIZE 14U
 #define BMP_INFO_HEADER_SIZE 40U
 
+#define BYTE CHAR_BIT
+
 #define ERROR_MSG(func, msg, ...)                                                  \
     fprintf(stderr, "%s:%s:%lu: " msg, __FILE__, func, __LINE__+0UL, __VA_ARGS__); \
     exit(EXIT_FAILURE)
@@ -41,19 +43,19 @@ static unsigned char *BMP_info_header(size_t height, size_t width)
 
     info_header[0] = (unsigned char) BMP_INFO_HEADER_SIZE;
     info_header[4] = (unsigned char) width;
-    info_header[5] = (unsigned char) (width >> 8);
-    info_header[6] = (unsigned char) (width >> 16);
-    info_header[7] = (unsigned char) (width >> 24);
+    info_header[5] = (unsigned char) (width >> BYTE);
+    info_header[6] = (unsigned char) (width >> (2*BYTE));
+    info_header[7] = (unsigned char) (width >> (3*BYTE));
     info_header[8] = (unsigned char) height;
-    info_header[9] = (unsigned char) (height >> 8);
-    info_header[10] = (unsigned char) (height >> 16);
-    info_header[11] = (unsigned char) (height >> 24);
+    info_header[9] = (unsigned char) (height >> BYTE);
+    info_header[10] = (unsigned char) (height >> (2*BYTE));
+    info_header[11] = (unsigned char) (height >> (3*BYTE));
     info_header[12] = (unsigned char) 1;
     info_header[14] = (unsigned char) (BMP_BYTES_PER_PIXEL * CHAR_BIT);
     info_header[20] = (unsigned char) imagesizebytes;
-    info_header[21] = (unsigned char) (imagesizebytes >> 8);
-    info_header[22] = (unsigned char) (imagesizebytes >> 16);
-    info_header[23] = (unsigned char) (imagesizebytes >> 24);
+    info_header[21] = (unsigned char) (imagesizebytes >> BYTE);
+    info_header[22] = (unsigned char) (imagesizebytes >> (2*BYTE));
+    info_header[23] = (unsigned char) (imagesizebytes >> (3*BYTE));
 
     return info_header;
 }
@@ -72,9 +74,9 @@ static unsigned char *BMP_file_header(size_t height, size_t stride)
     file_header[0] = (unsigned char) 'B';
     file_header[1] = (unsigned char) 'M';
     file_header[2] = (unsigned char) filesz;
-    file_header[3] = (unsigned char) (filesz >> 8);
-    file_header[4] = (unsigned char) (filesz >> 16);
-    file_header[5] = (unsigned char) (filesz >> 24);
+    file_header[3] = (unsigned char) (filesz >> BYTE);
+    file_header[4] = (unsigned char) (filesz >> (2*BYTE));
+    file_header[5] = (unsigned char) (filesz >> (3*BYTE));
     file_header[10] = (unsigned char) (BMP_FILE_HEADER_SIZE + BMP_INFO_HEADER_SIZE);
 
     return file_header;
@@ -117,16 +119,22 @@ void BMP_generate(unsigned char *img, size_t height, size_t width, const char *r
 
 int main(void)
 {
-    const size_t height = 420;
-    const size_t width = 860;
-    unsigned char img[height][width][BMP_BYTES_PER_PIXEL];
+    const size_t height = 2500;//420;
+    const size_t width = 3600;//860;
+    unsigned char *img = malloc(sizeof(*img) * height * width *BMP_BYTES_PER_PIXEL);
+    if (!img) {
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
     const char *filename = "BMP_testimg.bmp";
 
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            img[i][j][2] = (unsigned char) (i * 255 / height);
-            img[i][j][1] = (unsigned char) (j * 255 / width);
-            img[i][j][0] = (unsigned char) ((i+j) * 255 / (width+height));
+            size_t offset = j + width * i;
+            unsigned char *pixeloffset = img + offset * BMP_BYTES_PER_PIXEL;
+            pixeloffset[2] = (unsigned char) (i * 255 / height);
+            pixeloffset[1] = (unsigned char) (j * 255 / width);
+            pixeloffset[0] = (unsigned char) ((i+j) * 255 / (width+height));
         }
     }
 
