@@ -68,14 +68,15 @@ struct _BMPmini_header {
 
 struct _BMPmini_image {
     BMPmini_header header;
-    unsigned char data[FLEX_ARRAY];
+    uint8_t data[FLEX_ARRAY];
 };
 
 //--------------------------------------------------------
 // Internals
 //--------------------------------------------------------
-#define BMP_BITS_PER_PIXEL   (3 * CHAR_BIT)
-#define BMP_BITS_PER_BYTE    CHAR_BIT
+#define BMP_BITS_PER_PIXEL   24
+#define BMP_BITS_PER_BYTE    8
+#define BMP_BYTES_PER_PIXEL  (BMP_BITS_PER_PIXEL / BMP_BITS_PER_BYTE);
 
 #define BMPmini_PERROR(func, msg, flag)                           \
     fprintf(stderr, "%s:%s:%lu: ", __FILE__, func, __LINE__+0UL); \
@@ -89,6 +90,22 @@ static inline void BMPmini_perror(const char *restrict msg, bool flag)
     else {
         fputs(msg, stderr);
     }
+}
+
+static inline bool __st_overflow(size_t a, size_t b)
+{
+    if (a > SIZE_MAX - b) {
+        return true;
+    }
+    return false;
+}
+
+static inline bool __int32_overflow(int32_t a, int32_t b)
+{
+    if (a > INT32_MAX - b) {
+        return true;
+    }
+    return false;
 }
 
 //-----------------------------------
@@ -124,12 +141,6 @@ static inline long __get_file_size(FILE *imgfp)
 static inline uint32_t __get_bytes_per_pixel(BMPmini_header *restrict header)
 {
     return header->bitsperpixel / BMP_BITS_PER_BYTE;
-}
-
-static inline uint32_t __get_position_x_row(int32_t x, BMPmini_header *restrict header)
-{
-    // Returns the position of pixel x from the beginning of a row
-    return x * __get_bytes_per_pixel(header);
 }
 
 static inline uint32_t __get_padding(BMPmini_header *restrict header)
