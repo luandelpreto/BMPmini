@@ -13,11 +13,12 @@
 //-------------------------------------
 static long __get_file_size(FILE *);
 static uint32_t __get_bytes_per_pixel(BMPmini_header *restrict);
-static uint32_t __get_position_x_row(int32_t, BMPmini_header *restrict);
 static uint32_t __get_padding(BMPmini_header *restrict);
 static uint32_t __get_image_row_size_bytes(BMPmini_header *restrict);
 static uint32_t __get_image_size_bytes(BMPmini_header *restrict);
 static void BMPmini_perror(const char *restrict, bool);
+static bool __st_overflow(size_t, size_t);
+static bool __int32_overflow(int32_t, int32_t);
 //-------------------------------------
 
 BMPmini_image *BMPmini_read(const char *restrict filename)
@@ -44,13 +45,13 @@ BMPmini_image *BMPmini_read(const char *restrict filename)
     }
 
     // Account for data offset from header
-    if (header.image_size_bytes > SIZE_MAX - (header.offset - sizeof(header))) {
+    if (__st_overflow(header.image_size_bytes, header.offset - sizeof(header))) {
         BMPmini_PERROR(__func__, "[OVERFLOW]: size_t overflow encountered", 0);
         goto CLEANUP_R1;
     }
 
     size_t imgszbytes_and_offset = header.image_size_bytes + (header.offset - sizeof(header));
-    if (sizeof(BMPmini_image) > SIZE_MAX - imgszbytes_and_offset) {
+    if (__st_overflow(sizeof(BMPmini_image), imgszbytes_and_offset)) {
         BMPmini_PERROR(__func__, "[OVERFLOW]: size_t overflow encountered", 0);
         goto CLEANUP_R1;
     }
@@ -64,8 +65,6 @@ BMPmini_image *BMPmini_read(const char *restrict filename)
 
     // Read BMP image data
     nbytes = fread(img->data, imgszbytes_and_offset, 1, imgfp);
-
-    //nbytes = fread(img->data, img->header.image_size_bytes, 1, imgfp);
     if (nbytes != 1) {
         BMPmini_PERROR(__func__, "[ERROR]: fread", 1);
         goto CLEANUP_R0;
@@ -117,7 +116,74 @@ int BMPmini_write(const char *restrict filename, BMPmini_image *img)
 BMPmini_image *BMPmini_crop(BMPmini_image *img, int32_t x, int32_t y, int32_t w, int32_t h)
 {
     assert(img);
+    assert(x >= 0 && y >= 0 && w > 0 && h > 0);
 
+    if (__int32_overflow(x, w) || __int32_overflow(y, h)) {
+        BMPmini_PERROR(__func__, "[OVERFLOW]: int32_t overflow encountered", 0);
+        return NULL;
+    }
+
+    if (x+w > img->header.width_px || y+h > img->header.height_px) {
+        BMPmini_PERROR(__func__, "[ERROR]: size of the new image greater than original", 0);
+        return NULL;
+    }
+
+    // Update new header size and dimensions info
+    BMPmini_header newheader = img->header;
+    newheader.width_px = w;
+    newheader.height_px = h;
+    newheader.image_size_bytes = __get_image_size_bytes(&newheader);
+    newheader.size = BMP_HEADER_SIZE + newheader.image_size_bytes;
+
+    if (__st_overflow(newheader.image_size_bytes, newheader.offset - sizeof(newheader))) {
+        BMPmini_PERROR(__func__, "[OVERFLOW]: size_t overflow encountered", 0);
+        return NULL;
+    }
+    size_t imgszbytes_and_offset = newheader.image_size_bytes + (newheader.offset - sizeof(newheader));
+
+    if (__st_overflow(sizeof(BMPmini_image), imgszbytes_and_offset)) {
+        BMPmini_PERROR(__func__, "[OVERFLOW]: size_t overflow encountered", 0);
+        return NULL;
+    }
+
+    BMPmini_image *newimg = malloc(sizeof(*newimg) + imgszbytes_and_offset);
+    if (!newimg) {
+        BMPmini_PERROR(__func__, "[ERROR]: malloc", 1);
+        return NULL;
+    }
+    newimg->header = newheader;
+
+    // Get final crop positions
+    int32_t width = x + w;
+    int32_t height = y + h;
+
+    // Bottom-Up DIB
+    if (img->header.height_px > 0) {
+        y = img->header.height_px - height;
+        height = y + h;
+    }
+    // Top-Down DIB - nothing to do
+
+    int32_t newidx = newimg->header.offset - sizeof(newimg->header);
+    uint32_t bpp = __get_bytes_per_pixel(&img->header);
+    uint32_t width_and_padding = img->header.width_px + __get_padding(&img->header);
+    int32_t newimg_padding = __get_padding(&newimg->header);
+    // Size of offset is allocated within data array
+    uint8_t *data = img->data + (img->header.offset - sizeof(img->header));
+    for (int32_t i = y; i < height; i++) {
+        for (int32_t j = x; j < width; j++) {
+            uint32_t offset = j + width_and_padding * i;
+            uint8_t *pixeloffset = data + offset * bpp; // Em algum momento, isso vai para o outro lado
+            for (uint8_t k = 0; k < 3; k++) {
+                newimg->data[newidx++] = pixeloffset[k];
+            }
+        }
+
+        memset(newimg->data + newidx, 0, newimg_padding);
+        newidx += newimg_padding;
+    }
+
+    return newimg;
 }
 
 bool BMPmini_check_header(BMPmini_header *restrict header, FILE *imgfp)

@@ -66,8 +66,17 @@ extern int BMPmini_write(const char *restrict filename, BMPmini_image *img);
 extern void BMPmini_free(BMPmini_image *img);
 
 /***************************************************************
- * \brief
+ * \brief  Crops the BMP image starting in (x, y)  with  w width
+ *         and h height.
  *
+ * \param  img  the image to be cropped
+ * \param  x    the image x coordinate from which start the crop
+ * \param  y    the image y coordinate from which start the crop
+ * \param  w    the width of the cropped image
+ * \param  h    the height of the cropped image
+ *
+ * \return  a new heap allocated image if successful
+ * \return  a NULL pointer otherwise
  ***************************************************************/
 extern BMPmini_image *BMPmini_crop(BMPmini_image *img, int32_t x, int32_t y, int32_t w, int32_t h);
 
