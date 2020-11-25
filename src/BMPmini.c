@@ -173,7 +173,7 @@ BMPmini_image *BMPmini_crop(BMPmini_image *img, int32_t x, int32_t y, int32_t w,
     for (int32_t i = y; i < height; i++) {
         for (int32_t j = x; j < width; j++) {
             uint32_t offset = j + width_and_padding * i;
-            uint8_t *pixeloffset = data + offset * bpp; // Em algum momento, isso vai para o outro lado
+            uint8_t *pixeloffset = data + offset * bpp;
             for (uint8_t k = 0; k < 3; k++) {
                 newimg->data[newidx++] = pixeloffset[k];
             }
