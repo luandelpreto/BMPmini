@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-pedantic -W -Wall
-OPTIMIZATION=-O2
+OPTIMIZE=-O2
 DEBUGFLAG=-g
 LIB=BMPmini
 
@@ -8,8 +8,8 @@ ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
 
-build: $(LIB).o $(LIB).c
-	$(CC) $(OPTIMIZATION) -c $(LIB).c
+build: build_msg $(LIB).o $(LIB).c
+	$(CC) $(OPTIMIZE) -c $(LIB).c
 	ar rcs libBMPmini.a $(LIB).o
 	ranlib libBMPmini.a
 
@@ -18,6 +18,7 @@ debug: $(LIB).o $(LIB).c
 	ar rcs libBMPmini.a $(LIB).o
 	ranlib libBMPmini.a
 
+.PHONY: install
 install: libBMPmini.a
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 libBMPmini.a $(DESTDIR)$(PREFIX)/lib
@@ -27,6 +28,9 @@ install: libBMPmini.a
 $(LIB).o: $(LIB).h $(LIB).h
 
 .PHONY: clean
-
 clean:
-	rm -rfv *.o
+	rm -fv *.o
+
+.PHONY: build_msg
+build_msg:
+	@printf "#\n# [$(LIB)]: Building $(LIB)...\n#\n"
