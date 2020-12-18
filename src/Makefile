@@ -29,7 +29,7 @@ install: $(LIBNAME)
 	install -d $(DESTDIR)$(PREFIX)/include/
 	install -m 644 BMPmini.h $(DESTDIR)$(PREFIX)/include/
 
-$(LIB).o: $(LIB).h $(LIB).h
+$(LIB).o: $(LIB).h $(LIB)def.h
 
 .PHONY: clean
 clean:
@@ -37,4 +37,4 @@ clean:
 
 .PHONY: build_msg
 build_msg:
-	@printf "${GREEN}#\n# [$(LIB)]: Building $(LIB)...\n#\n${RESETCOLOR}"
+	@printf "$(GREEN)#\n# [$(LIB)]: Building $(LIB)...\n#\n$(RESETCOLOR)"
