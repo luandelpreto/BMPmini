@@ -1,16 +1,6 @@
-CC=gcc
-CFLAGS=-pedantic -W -Wall
-OPTIMIZE=-O2
-DEBUGFLAG=-g
-LIB=BMPmini
-LIBNAME=libBMPmini.a
 # Color
 GREEN=$(shell tput -Txterm setaf 2)
 RESETCOLOR=$(shell tput -Txterm sgr0)
-
-ifeq ($(PREFIX),)
-	PREFIX := /usr/local
-endif
 
 build: build_msg $(LIB).o $(LIB).c
 	$(CC) $(OPTIMIZE) -c $(LIB).c
@@ -22,19 +12,24 @@ debug: $(LIB).o $(LIB).c
 	ar rcs $(LIBNAME) $<
 	ranlib $(LIBNAME)
 
-.PHONY: install
 install: $(LIBNAME)
-	install -d $(DESTDIR)$(PREFIX)/lib/
-	install -m 644 $(LIBNAME) $(DESTDIR)$(PREFIX)/lib
-	install -d $(DESTDIR)$(PREFIX)/include/
-	install -m 644 BMPmini.h $(DESTDIR)$(PREFIX)/include/
+	install -d $(PREFIX)/lib/
+	install -m 644 $(LIBNAME) $(PREFIX)/lib
+	install -d $(PREFIX)/include/
+	install -m 644 $(LIB).h $(PREFIX)/include/
+
+uninstall:
+	rm -f $(PREFIX)/lib/$(LIBNAME)
+	rm -f $(PREFIX)/include/$(LIB).h
+	-rmdir $(PREFIX)/lib > /dev/null 2>&1       # remove if empty
+	-rmdir $(PREFIX)/include > /dev/null 2>&1
 
 $(LIB).o: $(LIB).h $(LIB)def.h
 
-.PHONY: clean
 clean:
-	rm -fv *.o
+	-rm -fv *.o
 
-.PHONY: build_msg
 build_msg:
 	@printf "$(GREEN)#\n# [$(LIB)]: Building $(LIB)...\n#\n$(RESETCOLOR)"
+
+.PHONY: build debug build_msg clean install uninstall
