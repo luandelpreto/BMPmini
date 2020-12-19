@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     BMPmini_image *img = BMPmini_read(argv[1]);
 
     if (img) {
-        int res = BMPmini_write("images/testeBMP.bmp", img);
+        int res = BMPmini_write("images/results/testeBMP.bmp", img);
         if (res != BMPmini_SUCCESS) {
             fprintf(stderr, "FAIL TO WRITE\n");
         }
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 
     BMPmini_image *newimg = BMPmini_crop(img, 2500, 2000, 2500, 1000);
     if (newimg) {
-        int res = BMPmini_write("images/testeCroppedBMP.bmp", newimg);
+        int res = BMPmini_write("images/results/testeCroppedBMP.bmp", newimg);
         if (res != BMPmini_SUCCESS) {
             fprintf(stderr, "FAIL TO WRITE 2\n");
         }
