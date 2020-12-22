@@ -1,0 +1,50 @@
+# @configure_input@
+# Color
+GREEN=$(shell tput -Txterm setaf 2)
+RESETCOLOR=$(shell tput -Txterm sgr0)
+
+# Package-specific substitution variables
+package=@PACKAGE_NAME@
+version=@PACKAGE_VERSION@
+tarname=@PACKAGE_TARNAME@
+distdir=$(tarname)-#(version)
+
+# Prefix-specific substitution variable
+PREFIX=@prefix@
+
+build: build_msg $(LIB).o $(LIB).c
+	ar rcs $(LIBNAME) $(LIB).o
+	ranlib $(LIBNAME)
+
+debug/: $(LIB).o $(LIB).c
+	$(CC) $(CFLAGS) $(CDEBUG) -c $(LIB).c $<
+	ar rcs $(LIBNAME) $<
+	ranlib $(LIBNAME)
+
+install: $(LIBNAME)
+	install -d $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 $(LIBNAME) $(DESTDIR)$(PREFIX)/lib
+	install -d $(DESTDIR)$(PREFIX)/include/
+	install -m 644 $(LIB).h $(DESTDIR)$(PREFIX)/include/
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/lib/$(LIBNAME)
+	rm -f $(DESTDIR)$(PREFIX)/include/$(LIB).h
+	-rmdir $(DESTDIR)$(PREFIX)/lib > /dev/null 2>&1      # remove if empty
+	-rmdir $(DESTDIR)$(PREFIX)/include > /dev/null 2>&1
+
+$(LIB).o: $(LIB).h $(LIB)def.h
+
+clean:
+	-rm -fv *.o
+
+build_msg:
+	@printf "$(GREEN)#\n# [$(LIB)]: Building $(LIB)...\n#\n$(RESETCOLOR)"
+
+Makefile: Makefile.in ../config.status
+	cd .. && ./config.status src/$@
+
+./config.status: ../configure
+	cd .. && ./config.status --recheck
+
+.PHONY: build_msg build debug install uninstall clean

@@ -1,0 +1,7 @@
+non-recursive/
+Makefile
+src/Makefile
+autom4te.cache/
+config.log
+configure
+config.status
