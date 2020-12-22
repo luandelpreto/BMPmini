@@ -1,3 +1,4 @@
+# @configure_input@
 # Build example and create the distribution tar ball
 CFLAGS=-pedantic -W -Wall -O2
 CDEBUG=-g -O0
@@ -6,14 +7,20 @@ EXEC=example
 LIB=BMPmini
 LIBNAME=libBMPmini.a
 VPATH=src
-# Distribution info
-version=0.0.1
-tarname=$(LIB)
+# Package specific substitution variables
+package=@PACKAGE_NAME@
+version=@PACKAGE_VERSION@
+tarname=@PACKAGE_TARNAME@
 distdir=$(tarname)-$(version)
+
+# Prefix-specific substitution variable
+PREFIX=@prefix@
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
+export LIB
+export LIBNAME
 
 all: $(LIBNAME) $(EXEC).c
 	$(CC) $(CFLAGS) -c $(EXEC).c
@@ -35,12 +42,13 @@ $(distdir).tar.gz: $(distdir)
 
 $(distdir): FORCE
 	mkdir -p $(distdir)/src
-	cp -r Makefile LICENSE README.md example.c test/ $(distdir)
+	cp -r configure.ac configure Makefile.in LICENSE README.md example.c test/ $(distdir)
 	mkdir -p $(distdir)/images/ && cp -r images/examples $(distdir)/images/
-	cp -r src/Makefile src/BMPmini* $(distdir)/src
+	cp -r src/Makefile.in src/BMPmini* $(distdir)/src
 
 distcheck: $(distdir).tar.gz
 	gzip -cd $(distdir).tar.gz | tar xvf -
+	cd $(distdir) && ./configure
 	-cd $(distdir) && $(MAKE) build
 	cd $(distdir) && $(MAKE) all
 	cd $(distdir) && $(MAKE) DESTDIR=$${PWD}/_inst install
@@ -58,11 +66,19 @@ FORCE:
 	-rm -f $(distdir).tar.gz
 	-rm -rf $(distdir)
 
-clean: clean/$(LIBNAME)
+clean:
 	-rm $(EXEC).o
 	-rm $(EXEC)
 	-rm test/BMP_generate
+	-cd src && $(MAKE) $@
 
-include src/Makefile
+build install uninstall:
+	cd src && $(MAKE) $@
 
-.PHONY: FORCE all build debug clean dist distcheck install uninstall
+Makefile: Makefile.in config.status
+	./config.status $@
+
+config.status: configure
+	./config.status --recheck
+
+.PHONY: FORCE all debug clean dist distcheck install uninstall
