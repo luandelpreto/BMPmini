@@ -20,10 +20,6 @@
 #define BMP_NUM_COLORS       0
 #define BMP_IMPORTANT_COLORS 0
 
-#if defined(__GNUC__) || defined(_MSC_VER)
-#pragma pack(push)
-#pragma pack(1)      // Data alignment to 1 byte boundary
-
 struct _BMPmini_header {
     uint16_t type;             // Magic identifier
     uint32_t size;             // File size in bytes
@@ -42,12 +38,6 @@ struct _BMPmini_header {
     uint32_t num_colors;       // Number of colors
     uint32_t important_colors; // Important colors
 };
-
-#pragma pack(pop)
-
-#else
-#error "Unsupported pragma directives"
-#endif
 
 #ifndef FLEX_ARRAY
 // Check if the compiler is known to support flexible array members
