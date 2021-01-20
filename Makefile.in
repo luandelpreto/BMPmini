@@ -26,7 +26,7 @@ all: $(LIBNAME) $(EXEC).c
 	$(CC) $(CFLAGS) -c $(EXEC).c
 	$(CC) $(CFLAGS) $(EXEC).o -o $(EXEC) $(LDFLAGS)
 
-debug: $(LIBNAME) $(EXEC).c
+debug_: $(LIBNAME) $(EXEC).c
 	$(CC) $(CFLAGS) $(CDEBUG) -c $(EXEC).c
 	$(CC) $(CDEBUG) $(CFLAGS) $(EXEC).o -o $(EXEC) $(LDFLAGS)
 
@@ -72,7 +72,7 @@ clean:
 	-rm test/BMP_generate
 	-cd src && $(MAKE) $@
 
-build install uninstall:
+build install uninstall debug:
 	cd src && $(MAKE) $@
 
 Makefile: Makefile.in config.status
@@ -81,4 +81,4 @@ Makefile: Makefile.in config.status
 config.status: configure
 	./config.status --recheck
 
-.PHONY: FORCE all debug clean dist distcheck install uninstall
+.PHONY: FORCE all debug_ debug clean dist distcheck install uninstall

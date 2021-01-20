@@ -8,6 +8,10 @@
 
 #include "BMPmini.h"
 
+#if CHAR_BIT != 8
+#error "BMPmini supports only 8-bit bytes"
+#endif
+
 #define _BMP_FTELL_ERR -1L
 #define _BMP_FSEEK_ERR -2L
 
