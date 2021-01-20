@@ -17,8 +17,8 @@ build: build_msg $(LIB).o $(LIB).c
 	ranlib $(LIBNAME)
 
 debug: $(LIB).o $(LIB).c
-	$(CC) $(CFLAGS) $(CDEBUG) -c $(LIB).c $<
-	ar rcs $(LIBNAME) $<
+	$(CC) -DBMP_DEBUG $(CFLAGS) $(CDEBUG) -c $(LIB).c -o $<
+	ar rcs $(LIBNAME) $(LIB).o
 	ranlib $(LIBNAME)
 
 install: $(LIBNAME)
